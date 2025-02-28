@@ -1,9 +1,9 @@
 import random
 
 # Parâmetros:
-taxaAprendizagem = 0.01
-maxEpocas = 10000
-precisao = 0.00001
+taxaAprendizagem = 0.1
+maxEpocas = 250000
+precisao = 0.000001
 
 # Entradas
 with open('./entradas.txt', 'r') as file:
@@ -16,16 +16,20 @@ with open('./saidas.txt', 'r') as file:
     arqSaidas = file.readlines()
 
 # Funções
+def sinal(valor):
+    return 1 if valor >= 0 else -1
+
 def preencherW():
     resultado = []
-    for i in range(numeroEntradas + 1):
-        resultado.append(random.uniform(0.001, 0.9))
+    for i in range(numeroEntradas):
+        resultado.append(random.uniform(0, 1))
     return resultado
 
-def somatorioXW(i):
-    u = w[0] * -1
+def somatorioXW(i, w):
+    u = 0
+    valores = arqEntradas[i].split(',')
     for j in range(numeroEntradas):
-        u = u + w[j + 1] * float(arqEntradas[i].split(',')[j])
+        u = u + (w[j] * float(valores[j]))
     return u
 
 def EQM(w):
@@ -33,7 +37,7 @@ def EQM(w):
     eqm = 0
     for i in range(p):
         # u <- wT . xK ou somatório dos x.w
-        u = somatorioXW(i)
+        u = somatorioXW(i, w)
         eqm = eqm + ((float(arqSaidas[i]) - u) ** 2)
     eqm = eqm / p
     return eqm
@@ -47,16 +51,13 @@ print(f"Pesos iniciais: {w}")
 while abs(eqmatual - eqmAnterior) > precisao and epocas < maxEpocas:
     eqmAnterior = EQM(w)
     for i in range(len(arqEntradas)):
-        u = somatorioXW(i)
-        # Limiar de ativação
-        w[0] = w[0] + (taxaAprendizagem * (float(arqSaidas[i]) - u) * -1)
+        u = somatorioXW(i, w)
         # Pesos sinápticos
         for j in range(numeroEntradas):
-            w[j + 1] = w[j + 1] + taxaAprendizagem * (float(arqSaidas[i]) - u) * float(arqEntradas[i].split(',')[j])
+            entrada = float(arqEntradas[i].split(',')[j])
+            w[j] = w[j] + (taxaAprendizagem * (float(arqSaidas[i]) - u) * entrada)
     epocas = epocas + 1
-    print(f"Fim da época {epocas}.")
     eqmatual = EQM(w)
-    print(f"Erro quadrático médio atual: {eqmatual}")
 
 print(f"Pesos finais: {w}")
 with open('./pesos.txt', 'w') as file:
@@ -67,8 +68,4 @@ if(epocas == maxEpocas):
     print("A rede não convergiu.")
 else:
     print(f"A rede convergiu em {epocas} épocas.")
-            
-
-
-
         
